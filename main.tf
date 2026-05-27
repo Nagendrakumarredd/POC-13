@@ -7,7 +7,7 @@ provider "aws" {
 ############################
 resource "aws_eks_cluster" "poc" {
   name     = "poc-cluster"
-  role_arn = "arn:aws:iam::567017110325:role/eks-cluster-role-poc-2"
+  role_arn = "arn:aws:iam::860801567613:role/instanceRoleforpoc13"
 
   vpc_config {
     subnet_ids = [
