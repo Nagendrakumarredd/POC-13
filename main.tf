@@ -3,25 +3,50 @@ provider "aws" {
 }
 
 ############################
-# 1. EKS Cluster (Control Plane)
+# 1. EKS Cluster IAM Role
 ############################
-resource "aws_eks_cluster" "poc" {
-  name     = "poc-cluster"
-  role_arn = "arn:aws:iam::860801567613:role/instanceRoleforpoc13"
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "eks-cluster-role-poc"
 
-  vpc_config {
-    subnet_ids = [
-    
-  "subnet-0f91618dbecad7449",
-  "subnet-0b2c0c8a0af402202",
-  "subnet-07c0ef75bcc4e0f9b"
-]
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
 
-  }
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.eks_cluster_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
 ############################
-# 2. IAM Role for Worker Nodes (FIX)
+# 2. EKS Cluster (Control Plane)
+############################
+resource "aws_eks_cluster" "poc" {
+  name     = "poc-cluster"
+  role_arn = aws_iam_role.eks_cluster_role.arn
+
+  vpc_config {
+    subnet_ids = [
+      "subnet-0f91618dbecad7449",
+      "subnet-0b2c0c8a0af402202",
+      "subnet-07c0ef75bcc4e0f9b"
+    ]
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_cluster_policy
+  ]
+}
+
+############################
+# 3. IAM Role for Worker Nodes
 ############################
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-node-role-poc"
@@ -39,7 +64,7 @@ resource "aws_iam_role" "eks_node_role" {
 }
 
 ############################
-# 3. Attach Required Policies to Node Role
+# 4. Attach Policies to Node Role
 ############################
 resource "aws_iam_role_policy_attachment" "eks_worker_policy" {
   role       = aws_iam_role.eks_node_role.name
@@ -57,7 +82,7 @@ resource "aws_iam_role_policy_attachment" "ecr_readonly_policy" {
 }
 
 ############################
-# 4. Node Group (Worker Nodes)
+# 5. Node Group (Worker Nodes)
 ############################
 resource "aws_eks_node_group" "poc_nodes" {
   cluster_name    = aws_eks_cluster.poc.name
@@ -65,9 +90,9 @@ resource "aws_eks_node_group" "poc_nodes" {
   node_role_arn   = aws_iam_role.eks_node_role.arn
 
   subnet_ids = [
-    "subnet-0d2c14c66f6530651",
-    "subnet-03dd3ff00040da7ff",
-    "subnet-04816d32cf91f4879"
+    "subnet-0f91618dbecad7449",
+    "subnet-0b2c0c8a0af402202",
+    "subnet-07c0ef75bcc4e0f9b"
   ]
 
   scaling_config {
@@ -76,7 +101,7 @@ resource "aws_eks_node_group" "poc_nodes" {
     max_size     = 3
   }
 
-  instance_types = ["c7i-flex.large"]
+  instance_types = ["t3.medium"]
 
   depends_on = [
     aws_eks_cluster.poc,
