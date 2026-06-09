@@ -101,7 +101,7 @@ resource "aws_eks_node_group" "poc_nodes" {
     max_size     = 3
   }
 
-  instance_types = ["t3.micro]
+  instance_types = ["t3.micro"]
 
   depends_on = [
     aws_eks_cluster.poc,
