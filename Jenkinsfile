@@ -42,9 +42,17 @@ pipeline {
             steps {
                
                      sh '''
-                            aws eks update-kubeconfig --region us-east-1 --name poc-cluster
+                            export AWS_REGION=us-east-1
+                    
+                            aws sts get-caller-identity
+                    
+                            aws eks update-kubeconfig --region $AWS_REGION --name poc-cluster
+                    
+                            kubectl get nodes
+                    
                             kubectl apply -f k8s-deploy.yaml
                             '''
+
 
             }
         }
