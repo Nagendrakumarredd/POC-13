@@ -13,27 +13,19 @@ spec:
         app: my-html-app
     spec:
       containers:
-      - name: nginx
-        image: nginx:latest
+      - name: html-container
+        image: nginx
         ports:
         - containerPort: 80
-        volumeMounts:
-        - name: html-volume
-          mountPath: /usr/share/nginx/html
-      volumes:
-      - name: html-volume
-        configMap:
-          name: web-content
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: html-service
 spec:
+  type: LoadBalancer
   selector:
     app: my-html-app
   ports:
-    - protocol: TCP
-      port: 80
+    - port: 80
       targetPort: 80
-  type: LoadBalancer
